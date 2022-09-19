@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:11.5
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=pass123
+    ports:
+      - 5432:5432
+    networks:
+      - shared-network
+    volumes:
+      - ./postgres-db:/var/lib/postgresql/data
+
+  api:
+    container_name: scraping_api
+    restart: unless-stopped
+    image: web_scraping_api:1.0.0
+    build: 
+      context: api
+      target: production
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=docker
+    ports:
+      - 5000:5000
+    networks:
+      - shared-network
+    depends_on:
+      - postgres
+
+  client:
+    container_name: scraping_client
+    restart: unless-stopped
+    image: web_scraping_client:1.0.0
+    build: 
+      context: client
+      target: production
+      dockerfile: Dockerfile
+    ports:
+      - 8080:3000
+    networks:
+      - shared-network
+    depends_on:
+      - api
+
+networks:
+  shared-network:
